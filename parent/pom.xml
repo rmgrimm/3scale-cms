@@ -142,6 +142,11 @@
       <!-- 3scale CMS Tools Modules -->
       <dependency>
         <groupId>com.fwmotion</groupId>
+        <artifactId>3scale-cms-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fwmotion</groupId>
         <artifactId>3scale-cms-rest-client</artifactId>
         <version>${project.version}</version>
       </dependency>

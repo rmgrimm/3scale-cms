@@ -1,8 +1,8 @@
 package com.fwmotion.threescale.cms.cli;
 
 import com.fwmotion.threescale.cms.ThreescaleCmsClient;
-import com.fwmotion.threescale.cms.ThreescaleCmsClientFactory;
 import com.fwmotion.threescale.cms.model.CmsObject;
+import com.fwmotion.threescale.cms.restclient.ThreescaleCmsClientRestFactory;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
@@ -78,12 +78,12 @@ public class TopLevelCommand extends CommandBase {
     )
     private File rootDirectory;
 
-    private ThreescaleCmsClientFactory factory;
+    private ThreescaleCmsClientRestFactory factory;
     private List<CmsObject> cmsObjects;
 
     public ThreescaleCmsClient getClient() {
         if (factory == null) {
-            factory = new ThreescaleCmsClientFactory();
+            factory = new ThreescaleCmsClientRestFactory();
             factory.setBaseUrl(providerDomain);
             if (StringUtils.isNotBlank(accessToken)) {
                 factory.setAccessToken(accessToken);

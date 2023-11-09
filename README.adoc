@@ -127,6 +127,19 @@ dependency definition:
 </dependency>
 ----
 
+==== JAR list
+
+The following JAR artifacts are available for use under the `com.fwmotion`
+groupId:
+
+1. **3scale-cms-api**: Abstract interfaces for handling
+2. **3scale-cms-rest-client**: Implementations of the *3scale-cms-api* that call
+   the 3scale REST APIs.
+3. **3scale-cms-local**: Implementation of the *3scale-cms-api* that handle
+   files on a local filesystem.
+4. **3scale-cms-tools**: Logic for handling upload, download, differencing, and
+   other operations with implementations of *3scale-cms-api*.
+
 == Additional Documentation
 
 Additional documentation is available in the following files:

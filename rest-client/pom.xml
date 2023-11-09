@@ -34,6 +34,11 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>com.fwmotion</groupId>
+      <artifactId>3scale-cms-api</artifactId>
+    </dependency>
+
     <!-- Other dependencies -->
     <dependency>
       <groupId>commons-io</groupId>
