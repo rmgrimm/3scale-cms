@@ -26,8 +26,8 @@ public class CmsFileMatcher extends CmsObjectMatcher {
         }
 
         return super.matchesSafely(actual)
-            && actualMatchesExpected(expected.getSectionId(), actualFile.getSectionId())
-            && actualMatchesExpected(expected.getPath(), actualFile.getPath());
+            && actualMatchesExpected(expected.getSectionId(), actualFile.sectionId())
+            && actualMatchesExpected(expected.getPath(), actualFile.path());
     }
 
     @Override

@@ -172,11 +172,13 @@ public class DownloadCommand extends CommandBase implements Callable<Integer> {
             }
         }
 
-        switch (cmsObject.getType()) {
+        switch (cmsObject.threescaleObjectType()) {
             case SECTION:
+                assert cmsObject instanceof CmsSection;
                 performDownloadSection((CmsSection) cmsObject, targetFile);
                 break;
             case FILE:
+                assert cmsObject instanceof CmsFile;
                 performDownloadFile((CmsFile) cmsObject, targetFile);
                 break;
             case TEMPLATE:
@@ -184,10 +186,10 @@ public class DownloadCommand extends CommandBase implements Callable<Integer> {
                 performDownloadTemplate((CmsTemplate) cmsObject, targetFile);
                 break;
             default:
-                throw new UnsupportedOperationException("Unknown CMS type: " + cmsObject.getType());
+                throw new UnsupportedOperationException("Unknown CMS type: " + cmsObject.threescaleObjectType());
         }
 
-        if (!targetFile.setLastModified(cmsObject.getUpdatedAt().toInstant().toEpochMilli())) {
+        if (!targetFile.setLastModified(cmsObject.updatedAt().toInstant().toEpochMilli())) {
             Log.warn("Couldn't set last-modified for " + targetFile);
         }
 

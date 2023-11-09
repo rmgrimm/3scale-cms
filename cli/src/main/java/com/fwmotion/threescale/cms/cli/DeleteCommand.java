@@ -98,7 +98,7 @@ public class DeleteCommand extends CommandBase implements Callable<Integer> {
 
         if (noop) {
             for (CmsObject object : remoteObjectsToDelete) {
-                Log.info("Would delete " + object.getType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
+                Log.info("Would delete " + object.threescaleObjectType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
             }
         } else {
             ThreescaleCmsClient client = topLevelCommand.getClient();
@@ -111,7 +111,7 @@ public class DeleteCommand extends CommandBase implements Callable<Integer> {
 
     static void deleteObjects(ThreescaleCmsClient client, CmsObjectPathKeyGenerator pathKeyGenerator, List<CmsObject> remoteObjectsToDelete) {
         for (CmsObject object : remoteObjectsToDelete) {
-            String objectName = object.getType() + " " + pathKeyGenerator.generatePathKeyForObject(object);
+            String objectName = object.threescaleObjectType() + " " + pathKeyGenerator.generatePathKeyForObject(object);
 
             Log.info("Deleting " + objectName);
             try {

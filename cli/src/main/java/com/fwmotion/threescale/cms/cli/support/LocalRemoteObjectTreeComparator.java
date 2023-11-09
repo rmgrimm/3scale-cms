@@ -115,18 +115,18 @@ public class LocalRemoteObjectTreeComparator {
             Pair<CmsObject, File> localFilePair = localObjects.remove(path);
 
             if (localFilePair == null) {
-                if (remoteEntry.getValue().getType() != ThreescaleObjectType.SECTION) {
+                if (remoteEntry.getValue().threescaleObjectType() != ThreescaleObjectType.SECTION) {
                     remotePathsMissingInLocal.add(path);
                 }
             } else {
-                if (remoteEntry.getValue().getType() == localFilePair.getLeft().getType()
-                    && remoteEntry.getValue().getType() == ThreescaleObjectType.SECTION) {
+                if (remoteEntry.getValue().threescaleObjectType() == localFilePair.getLeft().threescaleObjectType()
+                    && remoteEntry.getValue().threescaleObjectType() == ThreescaleObjectType.SECTION) {
                     continue;
                 }
 
-                OffsetDateTime remoteUpdatedAt = remoteEntry.getValue().getUpdatedAt()
+                OffsetDateTime remoteUpdatedAt = remoteEntry.getValue().updatedAt()
                     .truncatedTo(ChronoUnit.SECONDS);
-                OffsetDateTime localUpdatedAt = localFilePair.getLeft().getUpdatedAt()
+                OffsetDateTime localUpdatedAt = localFilePair.getLeft().updatedAt()
                     .truncatedTo(ChronoUnit.SECONDS);
 
                 int comparisonResult = remoteUpdatedAt.compareTo(localUpdatedAt);

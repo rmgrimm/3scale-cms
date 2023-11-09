@@ -111,6 +111,6 @@ public class PagedTemplatesSpliterator extends AbstractPagedRestApiSpliterator<C
     @Nonnull
     @Override
     public Comparator<? super CmsTemplate> getComparator() {
-        return Comparator.comparing(CmsTemplate::getId);
+        return Comparator.comparing(CmsTemplate::id);
     }
 }

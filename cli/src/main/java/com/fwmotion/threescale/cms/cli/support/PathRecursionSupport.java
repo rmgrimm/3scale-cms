@@ -19,9 +19,9 @@ public class PathRecursionSupport {
         Map.of(
             // TODO: Find a way to get section ID / parent ID from other object
             //       types
-            CmsFile.class, file -> ((CmsFile) file).getSectionId(),
-            CmsPage.class, page -> ((CmsPage) page).getSectionId(),
-            CmsSection.class, section -> ((CmsSection) section).getParentId()
+            CmsFile.class, file -> ((CmsFile) file).sectionId(),
+            CmsPage.class, page -> ((CmsPage) page).sectionId(),
+            CmsSection.class, section -> ((CmsSection) section).parentId()
         );
 
     private static void addChildObjectsToList(LinkedList<Pair<String, CmsObject>> recursingList, Map<String, CmsObject> objectsByPath) {
@@ -31,11 +31,11 @@ public class PathRecursionSupport {
             Pair<String, CmsObject> currentPair = treeWalker.next();
             CmsObject currentObject = currentPair.getRight();
 
-            if (currentObject.getType() != ThreescaleObjectType.SECTION) {
+            if (currentObject.threescaleObjectType() != ThreescaleObjectType.SECTION) {
                 continue;
             }
 
-            Long parentId = currentObject.getId();
+            Long parentId = currentObject.id();
 
             int addedChildren = Math.toIntExact(
                 objectsByPath.entrySet()
@@ -76,7 +76,7 @@ public class PathRecursionSupport {
             case NONE -> new HashSet<>(specifiedPaths);
             case PATH_PREFIX -> specifiedPaths.stream()
                     .flatMap(pathKey -> {
-                        if (objectsByPath.get(pathKey).getType() == ThreescaleObjectType.SECTION) {
+                        if (objectsByPath.get(pathKey).threescaleObjectType() == ThreescaleObjectType.SECTION) {
                             return objectsByPath.keySet().stream()
                                     .filter(subKey -> StringUtils.startsWith(subKey, pathKey));
                         }

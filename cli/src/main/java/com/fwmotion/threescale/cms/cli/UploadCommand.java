@@ -1,6 +1,7 @@
 package com.fwmotion.threescale.cms.cli;
 
 import com.fwmotion.threescale.cms.ThreescaleCmsClient;
+import com.fwmotion.threescale.cms.cli.mappers.CmsObjectWithChangedAttributesMapper;
 import com.fwmotion.threescale.cms.cli.support.*;
 import com.fwmotion.threescale.cms.model.*;
 import io.quarkus.logging.Log;
@@ -9,6 +10,7 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.mapstruct.factory.Mappers;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -23,6 +25,9 @@ import java.util.stream.Collectors;
         "folder contents to CMS"
 )
 public class UploadCommand extends CommandBase implements Callable<Integer> {
+
+    private static final CmsObjectWithChangedAttributesMapper WITH_CHANGED_ATTRIBUTES_MAPPER
+        = Mappers.getMapper(CmsObjectWithChangedAttributesMapper.class);
 
     @Inject
     CmsObjectPathKeyGenerator pathKeyGenerator;
@@ -107,7 +112,7 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
         String newPageLayoutSystemName;
         if (layoutFilename == null) {
             newPageLayoutSystemName = treeDetails.getDefaultLayout()
-                .map(CmsLayout::getSystemName)
+                .map(CmsLayout::systemName)
                 .orElse(null);
         } else if (StringUtils.isBlank(layoutFilename)) {
             newPageLayoutSystemName = null;
@@ -117,7 +122,7 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
                 .orElseGet(() -> remoteObjectsByPath.get(layoutFilename));
 
             if (layout instanceof CmsLayout cmsLayout) {
-                newPageLayoutSystemName = cmsLayout.getSystemName();
+                newPageLayoutSystemName = cmsLayout.systemName();
             } else {
                 throw new IllegalArgumentException("Specified layout for new pages is not a layout!");
             }
@@ -139,11 +144,11 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
             uploadSortComparator = Comparator.comparing(Pair::getLeft,
                 sectionToTopComparator
                     .thenComparing((o1, o2) -> {
-                        if (o1 instanceof CmsLayout layout1 && StringUtils.equals(newPageLayoutSystemName, layout1.getSystemName())) {
+                        if (o1 instanceof CmsLayout layout1 && StringUtils.equals(newPageLayoutSystemName, layout1.systemName())) {
                             return -1;
                         }
 
-                        if (o2 instanceof CmsLayout layout2 && StringUtils.equals(newPageLayoutSystemName, layout2.getSystemName())) {
+                        if (o2 instanceof CmsLayout layout2 && StringUtils.equals(newPageLayoutSystemName, layout2.systemName())) {
                             return 1;
                         }
 
@@ -157,13 +162,17 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
             .map(pathKey -> {
                 Pair<CmsObject, File> localObjectPair = localObjectsByPath.get(pathKey);
                 CmsObject remoteObject = remoteObjectsByPath.get(pathKey);
+                CmsObject localObject = localObjectPair.getLeft();
+                File localFile = localObjectPair.getRight();
 
                 if (remoteObject == null) {
-                    CmsObject localObject = localObjectPair.getLeft();
-                    setRequiredCreationProperties(localObject, newPageLayoutSystemName);
+                    localObject = withRequiredCreationProperties(localObjectPair.getLeft(), newPageLayoutSystemName);
                 } else {
-                    updateObjectId(localObjectPair.getLeft(), remoteObject);
+                    localObject = withCopiedObjectId(localObject, remoteObject);
                 }
+
+                localObjectPair = Pair.of(localObject, localFile);
+                localObjectsByPath.put(pathKey, localObjectPair);
 
                 return localObjectPair;
             })
@@ -172,20 +181,20 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
 
         if (noop) {
             for (CmsObject object : deleteObjects) {
-                Log.info("Would delete " + object.getType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
+                Log.info("Would delete " + object.threescaleObjectType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
             }
 
             for (Pair<CmsObject, File> pair : localObjectsToUpload) {
                 CmsObject object = pair.getLeft();
-                Log.info("Would upload " + object.getType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
+                Log.info("Would upload " + object.threescaleObjectType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
             }
 
             if (!keepAsDraft) {
                 for (Pair<CmsObject, File> pair : localObjectsToUpload) {
                     CmsObject object = pair.getLeft();
 
-                    if (object.getType() == ThreescaleObjectType.TEMPLATE) {
-                        Log.info("Would publish " + object.getType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
+                    if (object.threescaleObjectType() == ThreescaleObjectType.TEMPLATE) {
+                        Log.info("Would publish " + object.threescaleObjectType() + " " + pathKeyGenerator.generatePathKeyForObject(object));
                     }
                 }
             }
@@ -195,18 +204,16 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
 
             DeleteCommand.deleteObjects(client, pathKeyGenerator, deleteObjects);
 
-            for (Pair<CmsObject, File> pair : localObjectsToUpload) {
-                performUpload(client, pair.getLeft(), pair.getRight(), localObjectsByPath, remoteObjectsByPath);
-            }
+            List<CmsTemplate> localTemplatesToPublish = localObjectsToUpload.stream()
+                .map(pair -> performUpload(client, pair.getLeft(), pair.getRight(), localObjectsByPath, remoteObjectsByPath))
+                .filter(cmsObject -> cmsObject instanceof CmsTemplate)
+                .map(o -> (CmsTemplate) o)
+                .toList();
 
             if (!keepAsDraft) {
-                for (Pair<CmsObject, File> pair : localObjectsToUpload) {
-                    CmsObject object = pair.getLeft();
-
-                    if (object instanceof CmsTemplate cmsTemplate) {
-                        Log.info("Publishing " + object.getType() + " " + pathKeyGenerator.generatePathKeyForObject(object) + "...");
-                        client.publish(cmsTemplate);
-                    }
+                for (CmsTemplate cmsTemplate : localTemplatesToPublish) {
+                    Log.info("Publishing " + cmsTemplate.threescaleObjectType() + " " + pathKeyGenerator.generatePathKeyForObject(cmsTemplate) + "...");
+                    client.publish(cmsTemplate);
                 }
             }
         }
@@ -214,29 +221,38 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
         return 0;
     }
 
-    private void performUpload(@Nonnull ThreescaleCmsClient client,
-                               @Nonnull CmsObject object,
-                               @Nonnull File file,
-                               @Nonnull Map<String, Pair<CmsObject, File>> localFilesByPathKey,
-                               @Nonnull Map<String, CmsObject> remoteObjectsByPathKey) {
+    private CmsObject performUpload(@Nonnull ThreescaleCmsClient client,
+                                    @Nonnull CmsObject object,
+                                    @Nonnull File file,
+                                    @Nonnull Map<String, Pair<CmsObject, File>> localFilesByPathKey,
+                                    @Nonnull Map<String, CmsObject> remoteObjectsByPathKey) {
         String pathKey = pathKeyGenerator.generatePathKeyForObject(object);
-        Log.info("Uploading " + object.getType() + " " + pathKey + "...");
+        Log.info("Uploading " + object.threescaleObjectType() + " " + pathKey + "...");
 
         if (object instanceof CmsSection section) {
-            if (section.getParentId() == null && !"/".equals(pathKey)) {
-                section.setParentId(findParentId(pathKey, localFilesByPathKey, remoteObjectsByPathKey));
+            if (section.parentId() == null && !"/".equals(pathKey)) {
+                section = WITH_CHANGED_ATTRIBUTES_MAPPER.withParentId(
+                    section,
+                    findParentId(pathKey, localFilesByPathKey, remoteObjectsByPathKey)
+                );
             }
-            client.save(section);
+            return client.save(section);
         } else if (object instanceof CmsFile cmsFile) {
-            if (cmsFile.getSectionId() == null) {
-                cmsFile.setSectionId(findParentId(pathKey, localFilesByPathKey, remoteObjectsByPathKey));
+            if (cmsFile.sectionId() == null) {
+                cmsFile = WITH_CHANGED_ATTRIBUTES_MAPPER.withSectionId(
+                    cmsFile,
+                    findParentId(pathKey, localFilesByPathKey, remoteObjectsByPathKey)
+                );
             }
-            client.save(cmsFile, file);
+            return client.save(cmsFile, file);
         } else if (object instanceof CmsTemplate template) {
-            if (template instanceof CmsPage page && page.getSectionId() == null) {
-                page.setSectionId(findParentId(pathKey, localFilesByPathKey, remoteObjectsByPathKey));
+            if (template instanceof CmsPage page && page.sectionId() == null) {
+                template = WITH_CHANGED_ATTRIBUTES_MAPPER.withSectionId(
+                    page,
+                    findParentId(pathKey, localFilesByPathKey, remoteObjectsByPathKey)
+                );
             }
-            client.save(template, file);
+            return client.save(template, file);
         } else {
             throw new UnsupportedOperationException("Unknown object type " + object.getClass());
         }
@@ -256,13 +272,13 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
             CmsObject potentialParent = Optional.ofNullable(localFilesByPathKey.get(parentPathKey))
                 .map(Pair::getLeft)
                 .orElse(null);
-            if (potentialParent != null && potentialParent.getId() != null) {
-                return potentialParent.getId();
+            if (potentialParent != null && potentialParent.id() != null) {
+                return potentialParent.id();
             }
 
             potentialParent = remoteObjectsByPathKey.get(parentPathKey);
             if (potentialParent != null) {
-                return potentialParent.getId();
+                return potentialParent.id();
             }
 
             parentPathKey = parentPathKey.substring(0, pathKey.lastIndexOf('/', parentPathKey.length() - 2) + 1);
@@ -271,22 +287,27 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
         throw new IllegalStateException("Couldn't find any parent section ID... not even root");
     }
 
-    private void setRequiredCreationProperties(@Nonnull CmsObject localObject,
-                                               @Nullable String newPageLayoutSystemName) {
+    private CmsObject withRequiredCreationProperties(@Nonnull CmsObject localObject,
+                                                     @Nullable String newPageLayoutSystemName) {
         if (newPageLayoutSystemName != null
             && localObject instanceof CmsPage localPage
-            && "text/html".equals(localPage.getContentType())
+            && "text/html".equals(localPage.contentType())
         ) {
-            localPage.setLayout(newPageLayoutSystemName);
+            return WITH_CHANGED_ATTRIBUTES_MAPPER.withLayout(
+                localPage,
+                newPageLayoutSystemName
+            );
         }
+
+        return localObject;
     }
 
-    private void updateObjectId(@Nonnull CmsObject target,
-                                @Nonnull CmsObject source) {
-        if (target.getType() != source.getType()) {
+    private CmsObject withCopiedObjectId(@Nonnull CmsObject target,
+                                         @Nonnull CmsObject source) {
+        if (target.threescaleObjectType() != source.threescaleObjectType()) {
             throw new IllegalArgumentException("Cannot change types with update. " +
-                "Source type: " + source.getType() + "; " +
-                "Target type: " + target.getType());
+                "Source type: " + source.threescaleObjectType() + "; " +
+                "Target type: " + target.threescaleObjectType());
         }
 
         // Only set ID... Leave the rest for 3scale to dictate what's updatable
@@ -295,27 +316,44 @@ public class UploadCommand extends CommandBase implements Callable<Integer> {
         if (target instanceof CmsSection targetSection) {
             CmsSection sourceSection = (CmsSection) source;
 
-            targetSection.setId(source.getId());
-            targetSection.setParentId(sourceSection.getParentId());
+            return WITH_CHANGED_ATTRIBUTES_MAPPER.withIdAndParentId(
+                targetSection,
+                sourceSection.id(),
+                sourceSection.parentId()
+            );
         } else if (target instanceof CmsFile targetFile) {
             CmsFile sourceFile = (CmsFile) source;
 
-            targetFile.setId(sourceFile.getId());
-            targetFile.setSectionId(sourceFile.getSectionId());
+            return WITH_CHANGED_ATTRIBUTES_MAPPER.withIdAndSectionId(
+                targetFile,
+                sourceFile.id(),
+                sourceFile.sectionId()
+            );
         } else if (target instanceof CmsLayout targetLayout) {
-            targetLayout.setId(source.getId());
+            return WITH_CHANGED_ATTRIBUTES_MAPPER.withId(targetLayout, source.id());
         } else if (target instanceof CmsPage targetPage) {
-            targetPage.setId(source.getId());
-
             if (source instanceof CmsPage sourcePage) {
-                targetPage.setSectionId((sourcePage.getSectionId()));
+                return WITH_CHANGED_ATTRIBUTES_MAPPER.withIdAndSectionId(
+                    targetPage,
+                    sourcePage.id(),
+                    sourcePage.sectionId()
+                );
+            } else {
+                return WITH_CHANGED_ATTRIBUTES_MAPPER.withIdAndSectionId(
+                    targetPage,
+                    source.id(),
+                    null
+                );
             }
         } else if (target instanceof CmsPartial targetPartial) {
-            targetPartial.setId(source.getId());
+            return WITH_CHANGED_ATTRIBUTES_MAPPER.withId(
+                targetPartial,
+                source.id()
+            );
         } else {
             // Unknown... built-in pages/partials shouldn't come from local
             // files anyway
-            throw new UnsupportedOperationException("Unknown how to set ID for " + target.getType());
+            throw new UnsupportedOperationException("Unknown how to set ID for " + target.threescaleObjectType());
         }
     }
 

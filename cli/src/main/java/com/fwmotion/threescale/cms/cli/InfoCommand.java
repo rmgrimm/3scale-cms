@@ -79,11 +79,10 @@ public class InfoCommand extends CommandBase implements Callable<Integer> {
                 Log.info(
                     details.getRemoteObjectsByCmsPath().entrySet()
                         .stream()
-                        .sequential()
                         .sorted((left, right) -> comparePaths(left.getKey(), right.getKey()))
                         .map(pair -> "\t'" + StringUtils.rightPad(pair.getKey() + "'", longestPath + 1)
                             + " "
-                            + pair.getValue().getType())
+                            + pair.getValue().threescaleObjectType())
                         .collect(Collectors.joining("\n")));
             }
             Log.info("");
@@ -111,11 +110,10 @@ public class InfoCommand extends CommandBase implements Callable<Integer> {
                 Log.info(
                     details.getLocalObjectsByCmsPath().entrySet()
                         .stream()
-                        .sequential()
                         .sorted((left, right) -> comparePaths(left.getKey(), right.getKey()))
                         .map(pair -> "\t'" + StringUtils.rightPad(pair.getKey() + "'", longestPath + 1)
                             + " "
-                            + pair.getValue().getLeft().getType())
+                            + pair.getValue().getLeft().threescaleObjectType())
                         .collect(Collectors.joining("\n")));
             }
             Log.info("");
@@ -151,7 +149,7 @@ public class InfoCommand extends CommandBase implements Callable<Integer> {
 
     static void displayDefaultLayout(CmsLayout defaultLayout, String defaultLayoutPathKey) {
         Log.info("The layout '"
-            + defaultLayout.getSystemName()
+            + defaultLayout.systemName()
             + "' in file '"
             + defaultLayoutPathKey
             + "' was selected as the default layout for uploading new pages");

@@ -94,10 +94,6 @@ public class ThreescaleCmsClientRestImpl implements ThreescaleCmsClient {
         }
     }
 
-    private void handleApiErrors(@Nonnull VoidApiBlock apiBlock) throws ThreescaleCmsException {
-        handleApiErrors(apiBlock, null);
-    }
-
     @Nonnull
     private ThreescaleCmsApiException handleApiException(ApiExceptionTransformer<?> exceptionTransformer, ApiException e) {
         int httpStatus = e.getCode();
@@ -214,61 +210,64 @@ public class ThreescaleCmsClientRestImpl implements ThreescaleCmsClient {
     }
 
     @Override
-    public void save(@Nonnull CmsSection section) {
-        handleApiErrors(() -> {
+    public CmsSection save(@Nonnull CmsSection section) {
+        return handleApiErrors(() -> {
             Section restSection = SECTION_MAPPER.toRest(section);
-            if (section.getId() == null) {
+            Section restResponse;
+
+            if (section.id() == null) {
                 if (StringUtils.isBlank(restSection.getTitle())
                     && StringUtils.isNotBlank(restSection.getSystemName())) {
                     restSection.setTitle(restSection.getSystemName());
                 }
 
-                Section response = sectionsApi.createSection(
+                restResponse = sectionsApi.createSection(
                     restSection.getPublic(),
                     restSection.getTitle(),
                     restSection.getParentId(),
                     restSection.getPartialPath(),
                     restSection.getSystemName());
-
-                section.setId(response.getId());
             } else {
-                sectionsApi.updateSection(restSection.getId(),
+                restResponse = sectionsApi.updateSection(restSection.getId(),
                     restSection.getPublic(),
                     restSection.getTitle(),
                     restSection.getParentId());
             }
+
+            return SECTION_MAPPER.fromRest(restResponse);
         });
     }
 
     @Override
-    public void save(@Nonnull CmsFile file, @Nullable File fileContent) {
-        handleApiErrors(() -> {
+    public CmsFile save(@Nonnull CmsFile file, @Nullable File fileContent) {
+        return handleApiErrors(() -> {
             ModelFile restFile = FILE_MAPPER.toRest(file);
+            ModelFile restResponse;
 
-            if (file.getId() == null) {
-                ModelFile response = filesApi.createFile(
+            if (file.id() == null) {
+                restResponse = filesApi.createFile(
                     restFile.getSectionId(),
                     restFile.getPath(),
                     fileContent,
                     restFile.getDownloadable(),
                     restFile.getContentType());
-
-                file.setId(response.getId());
             } else {
-                filesApi.updateFile(file.getId(),
+                restResponse = filesApi.updateFile(file.id(),
                     restFile.getSectionId(),
                     restFile.getPath(),
                     restFile.getDownloadable(),
                     fileContent,
                     restFile.getContentType());
             }
+
+            return FILE_MAPPER.fromRest(restResponse);
         });
     }
 
     @Override
-    public void save(@Nonnull CmsTemplate template, @Nullable File templateDraft) {
+    public CmsTemplate save(@Nonnull CmsTemplate template, @Nullable File templateDraft) {
         /* When upgraded to JDK21:
-        switch (template) {
+        Template restResponse = switch (template) {
             case CmsBuiltinPage cmsBuiltinPage -> saveBuiltinPage(cmsBuiltinPage, templateDraft);
             case CmsBuiltinPartial cmsBuiltinPartial -> saveBuiltinPartial(cmsBuiltinPartial, templateDraft);
             case CmsLayout cmsLayout -> saveLayout(cmsLayout, templateDraft);
@@ -277,80 +276,87 @@ public class ThreescaleCmsClientRestImpl implements ThreescaleCmsClient {
             default -> throw new UnsupportedOperationException("Unknown template type: " + template.getClass().getName());
         }
         */
+        Template restResponse;
         if (template instanceof CmsBuiltinPage cmsBuiltinPage) {
-            saveBuiltinPage(cmsBuiltinPage, templateDraft);
+            restResponse = saveBuiltinPage(cmsBuiltinPage, templateDraft);
         } else if (template instanceof CmsBuiltinPartial cmsBuiltinPartial) {
-            saveBuiltinPartial(cmsBuiltinPartial, templateDraft);
+            restResponse = saveBuiltinPartial(cmsBuiltinPartial, templateDraft);
         } else if (template instanceof CmsLayout cmsLayout) {
-            saveLayout(cmsLayout, templateDraft);
+            restResponse = saveLayout(cmsLayout, templateDraft);
         } else if (template instanceof CmsPage cmsPage) {
-            savePage(cmsPage, templateDraft);
+            restResponse = savePage(cmsPage, templateDraft);
         } else if (template instanceof CmsPartial cmsPartial) {
-            savePartial(cmsPartial, templateDraft);
+            restResponse = savePartial(cmsPartial, templateDraft);
         } else {
             throw new UnsupportedOperationException("Unknown template type: " + template.getClass().getName());
         }
+
+        return TEMPLATE_MAPPER.fromRest(restResponse);
     }
 
-    private void saveBuiltinPage(@Nonnull CmsBuiltinPage page, @Nullable File templateDraft) {
-        if (page.getId() == null) {
+    private Template saveBuiltinPage(@Nonnull CmsBuiltinPage page, @Nullable File templateDraft) {
+        Long id = page.id();
+
+        if (id == null) {
             throw new ThreescaleCmsCannotCreateBuiltinException("Built-in pages can't be created.");
         }
 
-        saveUpdatedTemplate(page.getId(),
+        return saveUpdatedTemplate(id,
             TEMPLATE_MAPPER.toRestBuiltinPage(page),
             templateDraft);
     }
 
-    private void saveBuiltinPartial(@Nonnull CmsBuiltinPartial partial, @Nullable File templateDraft) {
-        if (partial.getId() == null) {
+    private Template saveBuiltinPartial(@Nonnull CmsBuiltinPartial partial, @Nullable File templateDraft) {
+        Long id = partial.id();
+
+        if (id == null) {
             throw new ThreescaleCmsCannotCreateBuiltinException("Built-in partials cannot be created.");
         }
 
-        saveUpdatedTemplate(partial.getId(),
+        return saveUpdatedTemplate(id,
             TEMPLATE_MAPPER.toRestBuiltinPartial(partial),
             templateDraft);
     }
 
-    private void saveLayout(@Nonnull CmsLayout layout, @Nullable File templateDraft) {
-        if (layout.getId() == null) {
-            Template response = saveNewTemplate(
+    private Template saveLayout(@Nonnull CmsLayout layout, @Nullable File templateDraft) {
+        Long id = layout.id();
+
+        if (id == null) {
+            return saveNewTemplate(
                 TEMPLATE_MAPPER.toRestLayoutCreation(layout),
                 templateDraft);
-
-            layout.setId(response.getId());
-        } else {
-            saveUpdatedTemplate(layout.getId(),
-                TEMPLATE_MAPPER.toRestLayoutUpdate(layout),
-                templateDraft);
         }
+
+        return saveUpdatedTemplate(id,
+            TEMPLATE_MAPPER.toRestLayoutUpdate(layout),
+            templateDraft);
     }
 
-    private void savePage(@Nonnull CmsPage page, @Nullable File templateDraft) {
-        if (page.getId() == null) {
-            Template response = saveNewTemplate(
+    private Template savePage(@Nonnull CmsPage page, @Nullable File templateDraft) {
+        Long id = page.id();
+
+        if (id == null) {
+            return saveNewTemplate(
                 TEMPLATE_MAPPER.toRestPageCreation(page), templateDraft);
-
-            page.setId(response.getId());
-        } else {
-            saveUpdatedTemplate(page.getId(),
-                TEMPLATE_MAPPER.toRestPageUpdate(page),
-                templateDraft);
         }
+
+        return saveUpdatedTemplate(id,
+            TEMPLATE_MAPPER.toRestPageUpdate(page),
+            templateDraft);
     }
 
-    private void savePartial(@Nonnull CmsPartial partial, @Nullable File templateDraft) {
-        if (partial.getId() == null) {
-            Template response = saveNewTemplate(
+    private Template savePartial(@Nonnull CmsPartial partial, @Nullable File templateDraft) {
+        Long id = partial.id();
+
+        if (id == null) {
+            return saveNewTemplate(
                 TEMPLATE_MAPPER.toRestPartialCreation(partial),
                 templateDraft);
-
-            partial.setId(response.getId());
-        } else {
-            saveUpdatedTemplate(partial.getId(),
-                TEMPLATE_MAPPER.toRestPartialUpdate(partial),
-                templateDraft);
         }
+
+        return saveUpdatedTemplate(id,
+            TEMPLATE_MAPPER.toRestPartialUpdate(partial),
+            templateDraft);
     }
 
     private Template saveNewTemplate(@Nonnull TemplateCreationRequest template, @Nullable File templateDraft) {
@@ -378,7 +384,6 @@ public class ThreescaleCmsClientRestImpl implements ThreescaleCmsClient {
             template.getContentType()));
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     private Template saveUpdatedTemplate(long id, @Nonnull TemplateUpdatableFields template, @Nullable File templateDraft) {
         String draft;
         if (templateDraft == null) {

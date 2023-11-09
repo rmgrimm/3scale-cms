@@ -6,7 +6,7 @@ public interface CmsTemplate extends CmsObject {
 
     @Nonnull
     @Override
-    default ThreescaleObjectType getType() {
+    default ThreescaleObjectType threescaleObjectType() {
         return ThreescaleObjectType.TEMPLATE;
     }
 

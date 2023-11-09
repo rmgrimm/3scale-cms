@@ -13,7 +13,6 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,22 +96,17 @@ public class LocalFileCmsObjectGenerator {
         return generateCmsFileFromFile(relativePath, file);
     }
 
-    private void applyFileSuffixInfo(@Nonnull String path,
-                                     @Nonnull Consumer<String> setContentType,
-                                     @Nonnull Consumer<String> setHandler,
-                                     @Nonnull Consumer<Boolean> setLiquidEnabled,
-                                     @Nonnull Consumer<String> setPath) {
+    private FileSuffixInfo getFileSuffixInfo(@Nonnull String path) {
         Matcher matcher = FILE_SUFFIX_PATTERN.matcher(path);
         if (matcher.matches()) {
             String fileExt = StringUtils.trimToEmpty(matcher.group("fileext"));
             String contentType = FILE_EXT_TO_CONTENT_TYPE.getOrDefault(fileExt, DEFAULT_CONTENT_TYPE);
-            setContentType.accept(contentType);
 
             String handler = StringUtils.trimToEmpty(matcher.group("handler"));
-            setHandler.accept(handler);
 
+            Boolean liquidEnabled = null;
             if (StringUtils.isNotBlank(matcher.group("liquid"))) {
-                setLiquidEnabled.accept(true);
+                liquidEnabled = true;
             }
 
             String filename = matcher.group("filename");
@@ -121,36 +115,45 @@ public class LocalFileCmsObjectGenerator {
                 filename += fileExt;
             }
 
-            setPath.accept(filename);
-        } else {
-            setPath.accept(path);
+            return new FileSuffixInfo(
+                filename,
+                contentType,
+                handler,
+                liquidEnabled
+            );
         }
+
+        return new FileSuffixInfo(
+            path,
+            null,
+            null,
+            null
+        );
     }
 
     @Nonnull
     private CmsSection generateSectionFromFile(@Nonnull String relativePath,
                                                @Nonnull File file) {
-        CmsSection section = new CmsSection();
-
         String basename = file.toPath().getFileName().toString();
         if ("/".equals(relativePath)) {
             basename = "root";
         }
 
-        section.setSystemName(basename);
-        section.setTitle(basename);
-        section.setPath(relativePath.replaceAll("/+$", ""));
-        section.setPublic(true);
-        section.setUpdatedAt(calculateUpdatedAt(file));
-
-        return section;
+        return new CmsSection(
+            null,
+            calculateUpdatedAt(file),
+            null,
+            null,
+            basename,
+            basename,
+            relativePath.replaceAll("/+$", ""),
+            true
+        );
     }
 
     @Nonnull
     private CmsLayout generateLayoutFromFile(@Nonnull String relativePath,
                                              @Nonnull File file) {
-        CmsLayout layout = new CmsLayout();
-
         String transformedPath;
 
         Matcher matcher = LAYOUT_PREFIX_PATTERN.matcher(relativePath);
@@ -160,29 +163,34 @@ public class LocalFileCmsObjectGenerator {
             transformedPath = relativePath;
         }
 
-        applyFileSuffixInfo(transformedPath,
-            layout::setContentType,
-            layout::setHandler,
-            layout::setLiquidEnabled,
-            path -> layout.setSystemName(path.replaceFirst("^/+", "")
-                .replaceFirst("^/layouts/", "/")));
+        FileSuffixInfo fileSuffixInfo = getFileSuffixInfo(transformedPath);
 
-        layout.setUpdatedAt(calculateUpdatedAt(file));
+        String systemName = fileSuffixInfo.path()
+            .replaceFirst("^/+", "")
+            .replaceFirst("^/layouts/", "/");
 
-        String layoutTitle = layout.getSystemName().replaceAll("_", " ");
+        String layoutTitle = systemName.replaceAll("_", " ");
         if (!StringUtils.endsWithIgnoreCase(layoutTitle, " layout")) {
             layoutTitle += " layout";
         }
-        layout.setTitle(layoutTitle);
 
-        return layout;
+        return new CmsLayout(
+            null,
+            calculateUpdatedAt(file),
+            null,
+            systemName,
+            layoutTitle,
+            fileSuffixInfo.contentType(),
+            fileSuffixInfo.handler(),
+            fileSuffixInfo.liquidEnabled(),
+            null,
+            null
+        );
     }
 
     @Nonnull
     private CmsPartial generatePartialFromFile(@Nonnull String relativePath,
                                                @Nonnull File file) {
-        CmsPartial partial = new CmsPartial();
-
         String transformedPath;
 
         Matcher matcher = PARTIAL_PREFIX_PATTERN.matcher(relativePath);
@@ -192,48 +200,69 @@ public class LocalFileCmsObjectGenerator {
             transformedPath = relativePath;
         }
 
-        applyFileSuffixInfo(transformedPath,
-            partial::setContentType,
-            partial::setHandler,
-            partial::setLiquidEnabled,
-            path -> partial.setSystemName(path.replaceFirst("^/+", "")));
+        FileSuffixInfo fileSuffixInfo = getFileSuffixInfo(transformedPath);
 
-        partial.setUpdatedAt(calculateUpdatedAt(file));
-
-        return partial;
+        return new CmsPartial(
+            null,
+            calculateUpdatedAt(file),
+            null,
+            fileSuffixInfo.path().replaceFirst("^/+", ""),
+            fileSuffixInfo.contentType(),
+            fileSuffixInfo.handler(),
+            fileSuffixInfo.liquidEnabled()
+        );
     }
 
     @Nonnull
     private CmsPage generatePageFromFile(@Nonnull String relativePath,
                                          @Nonnull File file) {
-        CmsPage page = new CmsPage();
+        FileSuffixInfo fileSuffixInfo = getFileSuffixInfo(relativePath);
 
-        applyFileSuffixInfo(relativePath,
-            page::setContentType,
-            page::setHandler,
-            page::setLiquidEnabled,
-            path -> page.setPath(path.replaceFirst("/index$", "/")));
+        String path = fileSuffixInfo.path()
+            .replaceFirst("/index$", "/");
 
-        page.setUpdatedAt(calculateUpdatedAt(file));
-
-        if ("/".equals(page.getPath())) {
-            page.setTitle("Home");
+        String title;
+        if ("/".equals(path)) {
+            title = "Home";
         } else {
-            page.setTitle(Path.of(page.getPath()).getFileName().toString());
+            title = Path.of(path).getFileName().toString();
         }
 
-        return page;
+        return new CmsPage(
+            null,
+            calculateUpdatedAt(file),
+            null,
+            null,
+            title,
+            path,
+            fileSuffixInfo.contentType(),
+            null,
+            fileSuffixInfo.handler(),
+            fileSuffixInfo.liquidEnabled(),
+            null
+        );
     }
 
     @Nonnull
     private CmsFile generateCmsFileFromFile(@Nonnull String relativePath,
                                             @Nonnull File file) {
-        CmsFile cmsFile = new CmsFile();
+        return new CmsFile(
+            null,
+            calculateUpdatedAt(file),
+            null,
+            null,
+            relativePath,
+            null,
+            null
+        );
+    }
 
-        cmsFile.setPath(relativePath);
-        cmsFile.setUpdatedAt(calculateUpdatedAt(file));
-
-        return cmsFile;
+    private record FileSuffixInfo(
+        String path,
+        String contentType,
+        String handler,
+        Boolean liquidEnabled
+    ) {
     }
 
 }

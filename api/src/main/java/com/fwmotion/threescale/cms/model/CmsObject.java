@@ -7,18 +7,18 @@ import java.time.OffsetDateTime;
 
 public interface CmsObject {
 
-    default boolean isBuiltin() {
+    default boolean builtin() {
         return false;
     }
 
     @Nonnull
-    ThreescaleObjectType getType();
+    ThreescaleObjectType threescaleObjectType();
 
     @Nullable
-    Long getId();
+    Long id();
 
-    OffsetDateTime getCreatedAt();
+    OffsetDateTime createdAt();
 
-    OffsetDateTime getUpdatedAt();
+    OffsetDateTime updatedAt();
 
 }

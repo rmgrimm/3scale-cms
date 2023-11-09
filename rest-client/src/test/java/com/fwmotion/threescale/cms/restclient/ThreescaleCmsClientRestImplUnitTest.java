@@ -333,8 +333,15 @@ class ThreescaleCmsClientRestImplUnitTest {
         given(httpResponseMock.getEntity()).willReturn(responseEntity);
 
         // When file content is requested
-        CmsFile cmsFile = new CmsFile();
-        cmsFile.setId(16L);
+        CmsFile cmsFile = new CmsFile(
+            null,
+            null,
+            16L,
+            null,
+            null,
+            null,
+            null
+        );
 
         Optional<InputStream> resultOptional = threescaleCmsClient.getFileContent(cmsFile);
 
@@ -399,8 +406,15 @@ class ThreescaleCmsClientRestImplUnitTest {
         given(httpResponseMock.getEntity()).willReturn(responseEntity);
 
         // When file content is requested
-        CmsFile cmsFile = new CmsFile();
-        cmsFile.setId(16L);
+        CmsFile cmsFile = new CmsFile(
+            null,
+            null,
+            16L,
+            null,
+            null,
+            null,
+            null
+        );
 
         Optional<InputStream> resultOptional = threescaleCmsClient.getFileContent(cmsFile);
 
@@ -496,8 +510,18 @@ class ThreescaleCmsClientRestImplUnitTest {
     void getTemplateDraft_ByObjectNoDraftContent() throws Exception {
         templatesApiTestSupport.givenGetTemplateWithoutDraft(119);
 
-        CmsLayout layout = new CmsLayout();
-        layout.setId(119L);
+        CmsLayout layout = new CmsLayout(
+            null,
+            null,
+            119L,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
 
         Optional<InputStream> result = threescaleCmsClient.getTemplateDraft(layout);
 
@@ -513,8 +537,18 @@ class ThreescaleCmsClientRestImplUnitTest {
     void getTemplateDraft_ByObjectWithDraftContent() throws Exception {
         templatesApiTestSupport.givenGetTemplateWithDraft(119);
 
-        CmsLayout layout = new CmsLayout();
-        layout.setId(119L);
+        CmsLayout layout = new CmsLayout(
+            null,
+            null,
+            119L,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
 
         Optional<InputStream> result = threescaleCmsClient.getTemplateDraft(layout);
 
@@ -544,8 +578,18 @@ class ThreescaleCmsClientRestImplUnitTest {
     void getTemplatePublished_ByObject() throws Exception {
         templatesApiTestSupport.givenGetTemplateWithDraft(119);
 
-        CmsLayout layout = new CmsLayout();
-        layout.setId(119L);
+        CmsLayout layout = new CmsLayout(
+            null,
+            null,
+            119L,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
 
         Optional<InputStream> result = threescaleCmsClient.getTemplatePublished(layout);
 
@@ -560,120 +604,121 @@ class ThreescaleCmsClientRestImplUnitTest {
     @Test
     void save_NewSectionNoTitle() throws Exception {
         // Given a new CmsSection object to create with no title set
-        CmsSection newSection = new CmsSection();
-        newSection.setParentId(30L);
-        newSection.setId(null);
-        newSection.setSystemName("new");
-        newSection.setPath("/new");
-        newSection.setTitle(null);
-        newSection.setPublic(true);
+        CmsSection newSection = new CmsSection(
+            null,
+            null,
+            null, 30L,
+            "new",
+            null, "/new",
+            null
+        );
 
         // And the generated API will respond with an object with an ID
         given(sectionsApi.createSection(
-            eq(newSection.getPublic()),
-            eq(newSection.getSystemName()),
-            eq(newSection.getParentId()),
-            eq(newSection.getPath()),
-            eq(newSection.getSystemName())))
+            eq(newSection._public()),
+            eq(newSection.systemName()),
+            eq(newSection.parentId()),
+            eq(newSection.path()),
+            eq(newSection.systemName())))
             .willReturn(new Section()
-                .parentId(newSection.getParentId())
+                .parentId(newSection.parentId())
                 .id(31L)
-                .systemName(newSection.getSystemName())
-                .partialPath(newSection.getPath())
-                .title(newSection.getSystemName())
-                ._public(newSection.getPublic())
+                .systemName(newSection.systemName())
+                .partialPath(newSection.path())
+                .title(newSection.systemName())
+                ._public(newSection._public())
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now()));
 
         // When the new section is saved
-        threescaleCmsClient.save(newSection);
+        CmsSection savedSection = threescaleCmsClient.save(newSection);
 
         // Then only the Sections API should have been called to create a section
         then(sectionsApi).should(only()).createSection(
-            eq(newSection.getPublic()),
-            eq(newSection.getSystemName()),
-            eq(newSection.getParentId()),
-            eq(newSection.getPath()),
-            eq(newSection.getSystemName()));
+            eq(newSection._public()),
+            eq(newSection.systemName()),
+            eq(newSection.parentId()),
+            eq(newSection.path()),
+            eq(newSection.systemName()));
         then(filesApi).shouldHaveNoInteractions();
         then(templatesApi).shouldHaveNoInteractions();
 
         // And the new section object should have an ID
-        assertThat(newSection.getId(), is(31L));
+        assertThat(savedSection.id(), is(31L));
     }
 
     @Test
     void save_NewSectionWithTitle() throws Exception {
         // Given a new CmsSection object to create with a title
-        CmsSection newSection = new CmsSection();
-        newSection.setParentId(30L);
-        newSection.setId(null);
-        newSection.setSystemName("new");
-        newSection.setPath("/new");
-        newSection.setTitle("new_section");
-        newSection.setPublic(true);
+        CmsSection newSection = new CmsSection(
+            null,
+            null,
+            null, 30L,
+            "new",
+            "new_section", "/new",
+            true
+        );
 
         // And the generated API will respond with an object with an ID
         given(sectionsApi.createSection(
-            eq(newSection.getPublic()),
-            eq(newSection.getTitle()),
-            eq(newSection.getParentId()),
-            eq(newSection.getPath()),
-            eq(newSection.getSystemName())))
+            eq(newSection._public()),
+            eq(newSection.title()),
+            eq(newSection.parentId()),
+            eq(newSection.path()),
+            eq(newSection.systemName())))
             .willReturn(new Section()
-                .parentId(newSection.getParentId())
+                .parentId(newSection.parentId())
                 .id(32L)
-                .systemName(newSection.getSystemName())
-                .partialPath(newSection.getPath())
-                .title(newSection.getTitle())
-                ._public(newSection.getPublic())
+                .systemName(newSection.systemName())
+                .partialPath(newSection.path())
+                .title(newSection.title())
+                ._public(newSection._public())
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now()));
 
         // When the new section is saved
-        threescaleCmsClient.save(newSection);
+        CmsSection savedSection = threescaleCmsClient.save(newSection);
 
         // Then only the sections API should have been called to create a section
         then(sectionsApi).should(only()).createSection(
-            eq(newSection.getPublic()),
-            eq(newSection.getTitle()),
-            eq(newSection.getParentId()),
-            eq(newSection.getPath()),
-            eq(newSection.getSystemName()));
+            eq(newSection._public()),
+            eq(newSection.title()),
+            eq(newSection.parentId()),
+            eq(newSection.path()),
+            eq(newSection.systemName()));
         then(filesApi).shouldHaveNoInteractions();
         then(templatesApi).shouldHaveNoInteractions();
 
         // And the new section should have an ID
-        assertThat(newSection.getId(), is(32L));
+        assertThat(savedSection.id(), is(32L));
     }
 
     @Test
     void save_UpdatedSection() throws Exception {
         // Given a CmsSection object with an ID already
-        CmsSection updatedSection = new CmsSection();
-        updatedSection.setParentId(30L);
-        updatedSection.setId(31L);
-        updatedSection.setSystemName("new");
-        updatedSection.setPath("/new");
-        updatedSection.setTitle("new_section");
-        updatedSection.setPublic(true);
-        updatedSection.setCreatedAt(OffsetDateTime.now());
-        updatedSection.setUpdatedAt(OffsetDateTime.now());
+        CmsSection updatedSection = new CmsSection(
+            OffsetDateTime.now(),
+            OffsetDateTime.now(),
+            31L, 30L,
+            "new",
+            "new_section", "/new",
+            true
+        );
 
         // And the generated API will respond with an object with an ID
         given(sectionsApi.updateSection(
-            eq(updatedSection.getId()),
-            eq(updatedSection.getPublic()),
-            eq(updatedSection.getTitle()),
-            eq(updatedSection.getParentId())))
+            eq(updatedSection.id()),
+            eq(updatedSection._public()),
+            eq(updatedSection.title()),
+            eq(updatedSection.parentId())))
             .willReturn(new Section()
-                .parentId(updatedSection.getParentId())
-                .id(updatedSection.getId())
-                .systemName(updatedSection.getSystemName())
-                .partialPath(updatedSection.getPath())
-                .title(updatedSection.getTitle())
-                ._public(updatedSection.getPublic())
-                .createdAt(updatedSection.getCreatedAt())
+                .parentId(updatedSection.parentId())
+                .id(updatedSection.id())
+                .systemName(updatedSection.systemName())
+                .partialPath(updatedSection.path())
+                .title(updatedSection.title())
+                ._public(updatedSection._public())
+                .createdAt(updatedSection.createdAt())
                 .updatedAt(OffsetDateTime.now()));
 
         // When the new section is saved
@@ -681,10 +726,10 @@ class ThreescaleCmsClientRestImplUnitTest {
 
         // Then only the sections API should have been called to create a section
         then(sectionsApi).should(only()).updateSection(
-            eq(updatedSection.getId()),
-            eq(updatedSection.getPublic()),
-            eq(updatedSection.getTitle()),
-            eq(updatedSection.getParentId()));
+            eq(updatedSection.id()),
+            eq(updatedSection._public()),
+            eq(updatedSection.title()),
+            eq(updatedSection.parentId()));
         then(filesApi).shouldHaveNoInteractions();
         then(templatesApi).shouldHaveNoInteractions();
     }
@@ -692,61 +737,69 @@ class ThreescaleCmsClientRestImplUnitTest {
     @Test
     void save_NewFile() throws Exception {
         // Given a CmsFile object with no ID yet
-        CmsFile newFile = new CmsFile();
-        newFile.setId(null);
-        newFile.setPath("/file.jpg");
-        newFile.setSectionId(30L);
-        newFile.setDownloadable(true);
+        CmsFile newFile = new CmsFile(
+            null,
+            null,
+            null,
+            30L,
+            "/file.jpg",
+            true,
+            null
+        );
 
         // And a File
         File newFileContent = new File("/tmp/file.jpg");
 
         // And the generated API will respond with an object with an ID
         given(filesApi.createFile(
-            eq(newFile.getSectionId()),
-            eq(newFile.getPath()),
+            eq(newFile.sectionId()),
+            eq(newFile.path()),
             same(newFileContent),
-            eq(newFile.getDownloadable()),
+            eq(newFile.downloadable()),
             nullable(String.class)))
             .willReturn(new ModelFile()
                 // TODO
                 .id(17L));
 
         // When the interface code is called
-        threescaleCmsClient.save(newFile, newFileContent);
+        CmsFile savedFile = threescaleCmsClient.save(newFile, newFileContent);
 
         // Then only the file content should have been saved
         then(filesApi).should(only()).createFile(
-            eq(newFile.getSectionId()),
-            eq(newFile.getPath()),
+            eq(newFile.sectionId()),
+            eq(newFile.path()),
             same(newFileContent),
-            eq(newFile.getDownloadable()),
+            eq(newFile.downloadable()),
             nullable(String.class));
         then(sectionsApi).shouldHaveNoInteractions();
         then(templatesApi).shouldHaveNoInteractions();
 
         // And the file should have had its ID updated
-        assertThat(newFile.getId(), is(17L));
+        assertThat(savedFile.id(), is(17L));
     }
 
     @Test
     void save_UpdatedFile() throws Exception {
         // Given a CmsFile object with an ID already
-        CmsFile updateFile = new CmsFile();
-        updateFile.setId(16L);
-        updateFile.setPath("/file.jpg");
-        updateFile.setSectionId(30L);
-        updateFile.setDownloadable(true);
+        CmsFile updateFile = new CmsFile(
+            null,
+            null,
+            16L,
+            30L,
+            "/file.jpg",
+            true,
+            null
+        );
 
         // And a File
         File newFileContent = new File("/tmp/file.jpg");
 
         // And the generated API will respond with an object with an ID
         given(filesApi.updateFile(
-            eq(updateFile.getId()),
-            eq(updateFile.getSectionId()),
-            eq(updateFile.getPath()),
-            eq(updateFile.getDownloadable()),
+            eq(updateFile.id()),
+            eq(updateFile.sectionId()),
+            eq(updateFile.path()),
+            eq(updateFile.downloadable()),
             same(newFileContent),
             nullable(String.class)))
             .willReturn(new ModelFile()
@@ -758,10 +811,10 @@ class ThreescaleCmsClientRestImplUnitTest {
 
         // Then only the file content should have been saved
         then(filesApi).should(only()).updateFile(
-            eq(updateFile.getId()),
-            eq(updateFile.getSectionId()),
-            eq(updateFile.getPath()),
-            eq(updateFile.getDownloadable()),
+            eq(updateFile.id()),
+            eq(updateFile.sectionId()),
+            eq(updateFile.path()),
+            eq(updateFile.downloadable()),
             same(newFileContent),
             nullable(String.class));
         then(sectionsApi).shouldHaveNoInteractions();
@@ -787,18 +840,22 @@ class ThreescaleCmsClientRestImplUnitTest {
     @Test
     void delete_File() throws Exception {
         // Given a CmsFile object with an ID already
-        CmsFile newFile = new CmsFile();
-        newFile.setId(16L);
-        newFile.setPath("/file.jpg");
-        newFile.setSectionId(30L);
-        newFile.setDownloadable(true);
+        CmsFile newFile = new CmsFile(
+            null,
+            null,
+            16L,
+            30L,
+            "/file.jpg",
+            true,
+            null
+        );
 
         // When the interface code is called
         threescaleCmsClient.delete(newFile);
 
         // Then only the file should have been deleted
         then(filesApi).should(only()).deleteFile(
-            eq(newFile.getId()));
+            eq(newFile.id()));
         then(sectionsApi).shouldHaveNoInteractions();
         then(templatesApi).shouldHaveNoInteractions();
     }
@@ -818,13 +875,14 @@ class ThreescaleCmsClientRestImplUnitTest {
     @Test
     void delete_Section() throws Exception {
         // Given a CmsSection object with an ID already
-        CmsSection cmsSection = new CmsSection();
-        cmsSection.setParentId(30L);
-        cmsSection.setId(31L);
-        cmsSection.setSystemName("new");
-        cmsSection.setPath("/new");
-        cmsSection.setTitle("new_section");
-        cmsSection.setPublic(true);
+        CmsSection cmsSection = new CmsSection(
+            null,
+            null,
+            31L, 30L,
+            "new",
+            "new_section", "/new",
+            true
+        );
 
         // When the interface code is called
         threescaleCmsClient.delete(cmsSection);
@@ -832,7 +890,7 @@ class ThreescaleCmsClientRestImplUnitTest {
         // Then only the section should have been deleted
         then(filesApi).shouldHaveNoInteractions();
         then(sectionsApi).should(only()).deleteSection(
-            eq(cmsSection.getId()));
+            eq(cmsSection.id()));
         then(templatesApi).shouldHaveNoInteractions();
     }
 
@@ -851,8 +909,18 @@ class ThreescaleCmsClientRestImplUnitTest {
     @Test
     void delete_Template() throws Exception {
         // Given a CmsLayout (Template) object with an ID already
-        CmsLayout layout = new CmsLayout();
-        layout.setId(119L);
+        CmsLayout layout = new CmsLayout(
+            null,
+            null,
+            119L,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
 
         // When the interface code is called
         threescaleCmsClient.delete(layout);
@@ -861,7 +929,7 @@ class ThreescaleCmsClientRestImplUnitTest {
         then(filesApi).shouldHaveNoInteractions();
         then(sectionsApi).shouldHaveNoInteractions();
         then(templatesApi).should(only()).deleteTemplate(
-            eq(layout.getId()));
+            eq(layout.id()));
     }
 
     @Test

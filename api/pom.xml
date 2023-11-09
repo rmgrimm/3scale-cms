@@ -41,10 +41,6 @@
       <groupId>jakarta.validation</groupId>
       <artifactId>jakarta.validation-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-    </dependency>
 
     <!-- Test dependencies -->
     <dependency>
@@ -123,7 +119,7 @@
           <jdkVersion>${maven.compiler.release}</jdkVersion>
 
           <includes>
-            <include>${project.basedir}/src/main/dokka/module.md</include>
+            <include>${project.basedir}/README.md</include>
             <include>${project.basedir}/src/main/dokka/packages.md</include>
           </includes>
 

@@ -9,10 +9,12 @@ import org.mapstruct.Mapping;
 public interface CmsSectionMapper {
 
     @Mapping(target = "path", source = "partialPath")
+    @Mapping(target = "_public", source = "public")
     CmsSection fromRest(Section section);
 
     @Mapping(target = "partialPath", source = "path")
     @Mapping(target = "_public", ignore = true)
+    @Mapping(target = "public", source = "_public")
     Section toRest(CmsSection section);
 
 }

@@ -12,8 +12,8 @@ public class CmsSectionToTopComparator implements Comparator<CmsObject> {
 
     @Override
     public int compare(CmsObject left, CmsObject right) {
-        boolean leftIsSection = left.getType() == ThreescaleObjectType.SECTION;
-        boolean rightIsSection = right.getType() == ThreescaleObjectType.SECTION;
+        boolean leftIsSection = left.threescaleObjectType() == ThreescaleObjectType.SECTION;
+        boolean rightIsSection = right.threescaleObjectType() == ThreescaleObjectType.SECTION;
         if (leftIsSection) {
             if (rightIsSection) {
                 return compareSectionIds((CmsSection) left, (CmsSection) right);
@@ -27,12 +27,12 @@ public class CmsSectionToTopComparator implements Comparator<CmsObject> {
     }
 
     private int compareSectionIds(CmsSection left, CmsSection right) {
-        if (left.getId() == null) {
+        if (left.id() == null) {
             return 1;
-        } else if (right.getId() == null) {
+        } else if (right.id() == null) {
             return -1;
         }
-        return left.getId().compareTo(right.getId());
+        return left.id().compareTo(right.id());
     }
 
 }

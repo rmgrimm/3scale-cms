@@ -1,4 +1,7 @@
 package com.fwmotion.threescale.cms.model;
 
-public record CmsError(String error) {
+public record CmsError(
+    int status,
+    String error
+) {
 }

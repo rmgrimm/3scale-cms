@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public interface ThreescaleCmsClient {
@@ -26,8 +25,7 @@ public interface ThreescaleCmsClient {
 
     @Nonnull
     default List<CmsObject> listAllCmsObjects() throws ThreescaleCmsException {
-        return streamAllCmsObjects()
-            .collect(Collectors.toList());
+        return streamAllCmsObjects().toList();
     }
 
     @Nonnull
@@ -35,8 +33,7 @@ public interface ThreescaleCmsClient {
 
     @Nonnull
     default List<CmsSection> listSections() throws ThreescaleCmsException {
-        return streamSections()
-            .collect(Collectors.toList());
+        return streamSections().toList();
     }
 
     @Nonnull
@@ -44,8 +41,7 @@ public interface ThreescaleCmsClient {
 
     @Nonnull
     default List<CmsFile> listFiles() throws ThreescaleCmsException {
-        return streamFiles()
-            .collect(Collectors.toList());
+        return streamFiles().toList();
     }
 
     @Nonnull
@@ -54,7 +50,7 @@ public interface ThreescaleCmsClient {
     @Nonnull
     default Optional<InputStream> getFileContent(@Nonnull CmsFile file) throws ThreescaleCmsException {
         return Optional.of(file)
-            .map(CmsFile::getId)
+            .map(CmsFile::id)
             .flatMap(this::getFileContent);
     }
 
@@ -63,8 +59,7 @@ public interface ThreescaleCmsClient {
 
     @Nonnull
     default List<CmsTemplate> listTemplates(boolean includeContent) throws ThreescaleCmsException {
-        return streamTemplates(includeContent)
-            .collect(Collectors.toList());
+        return streamTemplates(includeContent).toList();
     }
 
     @Nonnull
@@ -73,7 +68,7 @@ public interface ThreescaleCmsClient {
     @Nonnull
     default Optional<InputStream> getTemplateDraft(@Nonnull CmsTemplate template) throws ThreescaleCmsException {
         return Optional.of(template)
-            .map(CmsTemplate::getId)
+            .map(CmsTemplate::id)
             .flatMap(this::getTemplateDraft);
     }
 
@@ -83,31 +78,32 @@ public interface ThreescaleCmsClient {
     @Nonnull
     default Optional<InputStream> getTemplatePublished(@Nonnull CmsTemplate template) throws ThreescaleCmsException {
         return Optional.of(template)
-            .map(CmsTemplate::getId)
+            .map(CmsTemplate::id)
             .flatMap(this::getTemplatePublished);
     }
 
-    void save(@Nonnull CmsSection section) throws ThreescaleCmsException;
+    CmsSection save(@Nonnull CmsSection section) throws ThreescaleCmsException;
 
-    void save(@Nonnull CmsFile file, @Nonnull File fileContent) throws ThreescaleCmsException;
+    CmsFile save(@Nonnull CmsFile file, @Nonnull File fileContent) throws ThreescaleCmsException;
 
-    void save(@Nonnull CmsTemplate template, @Nonnull File draft) throws ThreescaleCmsException;
+    CmsTemplate save(@Nonnull CmsTemplate template, @Nonnull File draft) throws ThreescaleCmsException;
 
     void publish(long templateId) throws ThreescaleCmsException;
 
     default void publish(@Nonnull CmsTemplate template) throws ThreescaleCmsException {
-        publish(Objects.requireNonNull(template.getId()));
+        publish(Objects.requireNonNull(template.id()));
     }
 
     void delete(@Nonnull ThreescaleObjectType type, long id) throws ThreescaleCmsException;
 
     default void delete(@Nonnull CmsObject object) throws ThreescaleCmsException {
-        if (object.isBuiltin()) {
+        if (object.builtin()) {
             throw new ThreescaleCmsCannotDeleteBuiltinException();
         }
 
-        if (object.getId() != null) {
-            delete(object.getType(), object.getId());
+        Long id = object.id();
+        if (id != null) {
+            delete(object.threescaleObjectType(), id);
         }
     }
 }

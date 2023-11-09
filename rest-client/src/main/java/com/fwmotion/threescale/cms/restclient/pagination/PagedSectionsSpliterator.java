@@ -93,7 +93,7 @@ public class PagedSectionsSpliterator extends AbstractPagedRestApiSpliterator<Cm
     @Nonnull
     @Override
     public Comparator<? super CmsSection> getComparator() {
-        return Comparator.comparing(CmsSection::getId);
+        return Comparator.comparing(CmsSection::id);
     }
 
 }

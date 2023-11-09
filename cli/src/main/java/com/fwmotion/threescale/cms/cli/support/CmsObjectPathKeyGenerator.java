@@ -32,31 +32,31 @@ public class CmsObjectPathKeyGenerator {
             CmsSection.class, cmsSection -> generateKeyFromCms((CmsSection) cmsSection),
             CmsFile.class, cmsFile -> generateKeyFromCms((CmsFile) cmsFile),
             CmsBuiltinPage.class, cmsBuiltinPage -> generateKeyFromCms((CmsBuiltinPage) cmsBuiltinPage),
-            CmsBuiltinPartial.class, cmsBuiltinPartial -> generateKeyFromCmsSystemName(((CmsBuiltinPartial) cmsBuiltinPartial).getSystemName(), PARTIAL_FILENAME_PREFIX),
-            CmsLayout.class, cmsLayout -> generateKeyFromCmsSystemName(((CmsLayout) cmsLayout).getSystemName(), LAYOUT_FILENAME_PREFIX),
+            CmsBuiltinPartial.class, cmsBuiltinPartial -> generateKeyFromCmsSystemName(((CmsBuiltinPartial) cmsBuiltinPartial).systemName(), PARTIAL_FILENAME_PREFIX),
+            CmsLayout.class, cmsLayout -> generateKeyFromCmsSystemName(((CmsLayout) cmsLayout).systemName(), LAYOUT_FILENAME_PREFIX),
             CmsPage.class, cmsPage -> generateKeyFromCms((CmsPage) cmsPage),
-            CmsPartial.class, cmsPartial -> generateKeyFromCmsSystemName(((CmsPartial) cmsPartial).getSystemName(), PARTIAL_FILENAME_PREFIX)
+            CmsPartial.class, cmsPartial -> generateKeyFromCmsSystemName(((CmsPartial) cmsPartial).systemName(), PARTIAL_FILENAME_PREFIX)
         );
 
     @Nonnull
     private static String generateKeyFromCms(@Nonnull CmsSection cmsSection) {
-        return StringUtils.appendIfMissing(cmsSection.getPath(), "/");
+        return StringUtils.appendIfMissing(cmsSection.path(), "/");
     }
 
     @Nonnull
     private static String generateKeyFromCms(@Nonnull CmsFile cmsFile) {
-        return cmsFile.getPath();
+        return cmsFile.path();
     }
 
     @Nonnull
     private static String generateKeyFromCms(@Nonnull CmsBuiltinPage cmsBuiltinPage) {
         StringBuilder pathBuilder = new StringBuilder();
 
-        String origPath = cmsBuiltinPage.getPath();
+        String origPath = cmsBuiltinPage.path();
         if (StringUtils.isEmpty(origPath)) {
-            origPath = cmsBuiltinPage.getSystemName();
+            origPath = cmsBuiltinPage.systemName();
             pathBuilder.append('/')
-                .append(cmsBuiltinPage.getSystemName());
+                .append(cmsBuiltinPage.systemName());
         }
 
         if (StringUtils.endsWith(origPath, "/")) {
@@ -65,8 +65,8 @@ public class CmsObjectPathKeyGenerator {
 
         pathBuilder.append(DEFAULT_BUILTIN_PAGE_SUFFIX);
 
-        if (StringUtils.isNotBlank(cmsBuiltinPage.getHandler())) {
-            pathBuilder.append('.').append(cmsBuiltinPage.getHandler());
+        if (StringUtils.isNotBlank(cmsBuiltinPage.handler())) {
+            pathBuilder.append('.').append(cmsBuiltinPage.handler());
         } else {
             pathBuilder.append(DEFAULT_HANDLER_SUFFIX);
         }
@@ -104,28 +104,28 @@ public class CmsObjectPathKeyGenerator {
 
     @Nonnull
     private static String generateKeyFromCms(@Nonnull CmsPage cmsPage) {
-        StringBuilder pathBuilder = new StringBuilder(cmsPage.getPath());
+        StringBuilder pathBuilder = new StringBuilder(cmsPage.path());
 
-        if (StringUtils.endsWith(cmsPage.getPath(), "/")) {
+        if (StringUtils.endsWith(cmsPage.path(), "/")) {
             pathBuilder.append("index");
         }
 
-        String fileExt = CONTENT_TYPE_TO_FILE_EXT.get(StringUtils.trimToEmpty(StringUtils.lowerCase(cmsPage.getContentType())));
+        String fileExt = CONTENT_TYPE_TO_FILE_EXT.get(StringUtils.trimToEmpty(StringUtils.lowerCase(cmsPage.contentType())));
         if (fileExt != null) {
-            if (!StringUtils.endsWith(cmsPage.getPath(), fileExt)) {
+            if (!StringUtils.endsWith(cmsPage.path(), fileExt)) {
                 pathBuilder.append(fileExt);
             }
         } else {
-            Log.warn("Unknown file extension for content-type \"" + cmsPage.getContentType() + "\"");
+            Log.warn("Unknown file extension for content-type \"" + cmsPage.contentType() + "\"");
         }
 
-        if (StringUtils.isNotBlank(cmsPage.getHandler())) {
-            pathBuilder.append('.').append(cmsPage.getHandler());
+        if (StringUtils.isNotBlank(cmsPage.handler())) {
+            pathBuilder.append('.').append(cmsPage.handler());
         } else {
             pathBuilder.append(DEFAULT_HANDLER_SUFFIX);
         }
 
-        if (Boolean.TRUE == cmsPage.getLiquidEnabled()) {
+        if (Boolean.TRUE == cmsPage.liquidEnabled()) {
             pathBuilder.append(LIQUID_SUFFIX);
         }
 

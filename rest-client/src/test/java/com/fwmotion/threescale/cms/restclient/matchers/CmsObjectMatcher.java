@@ -23,9 +23,9 @@ public abstract class CmsObjectMatcher extends TypeSafeMatcher<CmsObject> {
 
     @Override
     protected boolean matchesSafely(@Nonnull CmsObject actual) {
-        return actualMatchesExpected(expectedId, actual.getId())
-            && actualMatchesExpected(expectedCreatedAt, actual.getCreatedAt())
-            && actualMatchesExpected(expectedUpdatedAt, actual.getUpdatedAt());
+        return actualMatchesExpected(expectedId, actual.id())
+            && actualMatchesExpected(expectedCreatedAt, actual.createdAt())
+            && actualMatchesExpected(expectedUpdatedAt, actual.updatedAt());
     }
 
     protected <T> boolean actualMatchesExpected(@Nullable T expected,

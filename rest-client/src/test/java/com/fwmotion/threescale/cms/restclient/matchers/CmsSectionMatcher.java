@@ -26,10 +26,10 @@ public class CmsSectionMatcher extends CmsObjectMatcher {
         }
 
         return super.matchesSafely(actual)
-            && actualMatchesExpected(expected.getParentId(), actualSection.getParentId())
-            && actualMatchesExpected(expected.getSystemName(), actualSection.getSystemName())
-            && actualMatchesExpected(expected.getPartialPath(), actualSection.getPath())
-            && actualMatchesExpected(expected.getPublic(), actualSection.getPublic());
+            && actualMatchesExpected(expected.getParentId(), actualSection.parentId())
+            && actualMatchesExpected(expected.getSystemName(), actualSection.systemName())
+            && actualMatchesExpected(expected.getPartialPath(), actualSection.path())
+            && actualMatchesExpected(expected.getPublic(), actualSection._public());
     }
 
     @Override

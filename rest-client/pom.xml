@@ -209,7 +209,7 @@
           <jdkVersion>${maven.compiler.release}</jdkVersion>
 
           <includes>
-            <include>${project.basedir}/src/main/dokka/module.md</include>
+            <include>${project.basedir}/README.md</include>
             <include>${project.basedir}/src/main/dokka/packages.md</include>
           </includes>
 

@@ -26,13 +26,13 @@ public class CmsLayoutMatcher extends CmsObjectMatcher {
         }
 
         return super.matchesSafely(actual)
-            && actualMatchesExpected(expected.getSystemName(), actualLayout.getSystemName())
-            && actualMatchesExpected(expected.getContentType(), actualLayout.getContentType())
-            && actualMatchesExpected(expected.getHandler(), actualLayout.getHandler())
-            && actualMatchesExpected(expected.getLiquidEnabled(), actualLayout.getLiquidEnabled())
-            && actualMatchesExpected(expected.getTitle(), actualLayout.getTitle())
-            && actualMatchesExpected(expected.getDraft(), actualLayout.getDraftContent())
-            && actualMatchesExpected(expected.getPublished(), actualLayout.getPublishedContent());
+            && actualMatchesExpected(expected.getSystemName(), actualLayout.systemName())
+            && actualMatchesExpected(expected.getContentType(), actualLayout.contentType())
+            && actualMatchesExpected(expected.getHandler(), actualLayout.handler())
+            && actualMatchesExpected(expected.getLiquidEnabled(), actualLayout.liquidEnabled())
+            && actualMatchesExpected(expected.getTitle(), actualLayout.title())
+            && actualMatchesExpected(expected.getDraft(), actualLayout.draftContent())
+            && actualMatchesExpected(expected.getPublished(), actualLayout.publishedContent());
     }
 
     @Override

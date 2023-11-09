@@ -17,7 +17,7 @@ public class ThreescaleCmsCannotDeleteBuiltinException extends ThreescaleCmsApiE
 
     public ThreescaleCmsCannotDeleteBuiltinException() {
         super(ERROR_HTTP_CODE,
-            new CmsError(ERROR_MESSAGE));
+            new CmsError(ERROR_HTTP_CODE, ERROR_MESSAGE));
     }
     public ThreescaleCmsCannotDeleteBuiltinException(@Nonnull CmsError apiError) {
         super(ERROR_HTTP_CODE,

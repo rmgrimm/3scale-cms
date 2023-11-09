@@ -91,6 +91,6 @@ public class PagedFilesSpliterator extends AbstractPagedRestApiSpliterator<CmsFi
     @Nonnull
     @Override
     public Comparator<? super CmsFile> getComparator() {
-        return Comparator.comparing(CmsFile::getId);
+        return Comparator.comparing(CmsFile::id);
     }
 }
